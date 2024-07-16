@@ -4,5 +4,5 @@ public interface IPlugboard
 {
     char Process(char chr);
     void ConnectSockets(char from, char to);
-    event EventHandler<PatchCableConnectedEventArgs>? OnCableConnected;
+    event EventHandler<PatchCableConnectedEventArgs>? OnPatchCableConnected;
 }

@@ -11,8 +11,8 @@ public class PlugboardBuilder : IPlugboardBuilder
     }
     void HandleCableConnectedEvent(object? sender, PatchCableConnectedEventArgs e)
     {
-        var completedStep = _instruction.Steps.Single(x => x.From == e.PatchCable.Side1 && x.To == e.PatchCable.Side2
-        || (x.From == e.PatchCable.Side2 && x.To == e.PatchCable.Side1));
+        var completedStep = _instruction.Steps.Single(x => x.From == e.PatchCable.End1 && x.To == e.PatchCable.End2
+        || (x.From == e.PatchCable.End2 && x.To == e.PatchCable.End1));
 
         //var completedStep = _instruction.Steps.Single(x => x == e.PatchCable);
 
@@ -22,7 +22,7 @@ public class PlugboardBuilder : IPlugboardBuilder
     public void Reset()
     {
         this._plugBoard = new Plugboard();
-        this._plugBoard.OnCableConnected += HandleCableConnectedEvent;
+        this._plugBoard.OnPatchCableConnected += HandleCableConnectedEvent;
     }
 
     public void ConnectCables(Instruction instruction)

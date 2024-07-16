@@ -1,74 +1,74 @@
-using System.Diagnostics.CodeAnalysis;
-
 namespace Enigma;
 public class Plugboard : IPlugboard
 {
-    private Socket[] _sockets;
-
+    private readonly Socket[] _sockets;
+    private const string A_to_Z = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     public Plugboard()
     {
-        char[] alphabets = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".ToCharArray();
+        char[] alphabets = A_to_Z.ToCharArray();
         _sockets = alphabets.Select(x => new Socket(x)).ToArray();
     }
 
-    public event EventHandler<PatchCableConnectedEventArgs>? OnCableConnected;
+    public event EventHandler<PatchCableConnectedEventArgs>? OnPatchCableConnected;
 
     protected virtual void RaiseOnCableConnectedEvent(PatchCableConnectedEventArgs e)
     {
-        OnCableConnected?.Invoke(this, e);
+        OnPatchCableConnected?.Invoke(this, e);
     }
 
-    public Socket? this[char i] => _sockets.ToList().SingleOrDefault(x => x.Character == i);
+    public Socket? this[char c] => _sockets.ToList().SingleOrDefault(x => x.Character == c);
 
     public class PatchCable
     {
-        public void ConnectTo(Socket socket)
+        public PatchCable ConnectTo(Socket socket)
         {
-            if (Side1 != default && Side2 != default)
+            if (End1 != default && End2 != default)
                 throw new InvalidOperationException($"This cable can't connected to this soket: {socket.ToString}");
 
-            if (this.Side1 == default)
-                this.Side1 = socket.Character;
+            if (this.End1 == default)
+                this.End1 = socket.Character;
             else
-                this.Side2 = socket.Character;
+                this.End2 = socket.Character;
 
             socket.Cable = this;
+            return this;
         }
-        public char OpositeSide(char chr) => (Side1 == chr) ? Side2 : Side1;
-        public char Side1 { get; private set; }
-        public char Side2 { get; private set; }
-
+        public char OtherEndOf(char chr) => (End1 == chr) ? End2 : End1;
+        public char End1 { get; private set; }
+        public char End2 { get; private set; }
         public override string ToString()
         {
-            return $"{this.Side1} <---> {this.Side2}";
+            return $"{this.End1} <---> {this.End2}";
         }
     }
 
     char IPlugboard.Process(char chr)
     {
         if (BoardCanProcessThis(chr))
-            return this[chr]!.Cable is null ? chr : this[chr]!.Cable!.OpositeSide(chr);
+            return this[chr]!.Cable is null ? chr : this[chr]!.Cable!.OtherEndOf(chr);
 
         return chr;
 
         bool BoardCanProcessThis(char chr) => this[chr] != null;
     }
 
-    public void ConnectSockets(char from, char to)
+    public void ConnectSockets(char end1, char end2)
     {
-        var fromSocket = this._sockets.Single(x => x.Character == from);
-        var toSocket = this._sockets.Single(x => x.Character == to);
+        var end1Socket = this._sockets.Single(x => x.Character == end1);
+        var end2Socket = this._sockets.Single(x => x.Character == end2);
 
-        if (fromSocket.Cable is null && toSocket.Cable is null)
+        if (end1Socket.Cable is null && end2Socket.Cable is null)
         {
             var patchCable = new PatchCable();
-            patchCable.ConnectTo(fromSocket);
-            patchCable.ConnectTo(toSocket);
-            fromSocket.Cable = patchCable; toSocket.Cable = patchCable;
+
+            patchCable.ConnectTo(end1Socket)
+                .ConnectTo(end2Socket);
+
+            end1Socket.Cable = patchCable; end2Socket.Cable = patchCable;
             RaiseOnCableConnectedEvent(new PatchCableConnectedEventArgs(patchCable));
         }
     }
-    public class Socket : IEqualityComparer<Socket>
+    public class Socket
     {
         private readonly char _character;
         public Socket(char character)
@@ -77,15 +77,5 @@ public class Plugboard : IPlugboard
         }
         public char Character { get { return _character; } }
         public PatchCable? Cable { get; set; }
-
-        public bool Equals(Socket? x, Socket? y)
-        {
-            return Char.ToUpper(x!.Character) == Char.ToUpper(y!.Character);
-        }
-
-        public int GetHashCode([DisallowNull] Socket obj)
-        {
-            return Char.ToUpper(obj.Character).GetHashCode();
-        }
     }
 }
