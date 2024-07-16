@@ -14,9 +14,6 @@ public class PlugboardBuilder : IPlugboardBuilder
         var completedStep = _instruction.Steps.Single(x => x.From == e.PatchCable.End1 && x.To == e.PatchCable.End2
         || (x.From == e.PatchCable.End2 && x.To == e.PatchCable.End1));
 
-        //var completedStep = _instruction.Steps.Single(x => x == e.PatchCable);
-
-
         completedStep.MarkDone();
     }
     public void Reset()
